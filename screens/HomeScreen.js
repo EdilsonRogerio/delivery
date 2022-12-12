@@ -15,16 +15,37 @@ import {
     AdjustmentsVerticalIcon,
 } from 'react-native-heroicons/outline';
 import Categories from '../components/Categories';
+import FeatureRow from '../components/FeatureRow';
+import sanityClient from '../sanity';
 
 const HomeScreen = () => {
 
     const navigation = useNavigation();
+    const [destaque, setDestaque] = useState([]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerShown: false,
         });
     }, []);
+
+    useEffect(() => {
+        sanityClient.fetch(
+            `
+            *[_type == "destaque"]{
+                ...,
+                restaurantes[]->{
+                    ...,
+                    prato[]->,
+                }
+            }
+            `
+        )
+        .then((data) => setDestaque(data))
+        .catch(console.error);
+    }, [])
+
+    console.log(destaque);
 
     return (
         <SafeAreaView className="bg-white pt-5" >
@@ -64,8 +85,21 @@ const HomeScreen = () => {
             </View>
             <ScrollView
                 className='mx-4'
+                showsVerticalScrollIndicator={false}
+                style={{ marginBottom: 200 }}
             >
                 <Categories />
+
+                {
+                    destaque?.map((destaque) => (
+                        <FeatureRow
+                            key={destaque._id}
+                            id={destaque._id}
+                            titulo={destaque.nome}
+                            descricao={destaque.descricao_curta}
+                        />
+                    ))
+                }
             </ScrollView>
         </SafeAreaView>
     );
